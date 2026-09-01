@@ -1,0 +1,60 @@
+name: CI - Build and Push to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-2
+      ECR_REPOSITORY: tech-challenge-2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY:${{ github.run_number }} .
+
+      - name: Tag Docker image
+        run: |
+          docker tag $ECR_REPOSITORY:${{ github.run_number }} \
+            ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:${{ github.run_number }}
+
+      - name: Push Docker image
+        run: |
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:${{ github.run_number }}
+
+      - name: Update Helm image tag
+        run: |
+          sed -i "s/tag: .*/tag: \"${{ github.run_number }}\"/" \
+            helm/tech-challenge-2/values.yaml
+
+      - name: Commit updated image tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add helm/tech-challenge-2/values.yaml
+          git commit -m "Update image tag to ${{ github.run_number }}" || echo "No changes to commit"
+          git push

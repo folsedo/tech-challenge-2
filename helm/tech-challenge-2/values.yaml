@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: 099771438874.dkr.ecr.us-east-2.amazonaws.com/tech-challenge-2
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   tag: "latest"
 
 imagePullSecrets: []

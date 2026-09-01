@@ -21,4 +21,4 @@ venv/
 # OS / editor
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/github-oidc-trust.json
