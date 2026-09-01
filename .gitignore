@@ -22,3 +22,4 @@ venv/
 .DS_Store
 Thumbs.db
 .vscode/github-oidc-trust.json
+terraform/image-ids.json
